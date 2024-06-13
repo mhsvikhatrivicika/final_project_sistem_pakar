@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzy Logic Form</title>
+</head>
+<body>
+    <h1>Fuzzy Logic Form</h1>
+    <form id="fuzzyForm">
+        {% for variabel in vari %}
+            <label for="{{ variabel[1] }}">{{ variabel[3] }}:</label>
+            <input type="number" id="{{ variabel[1] }}" name="{{ variabel[1] }}" min="1" max="10" required><br><br>
+        {% endfor %}
+        
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="output"></div>
+
+    <a href="/pindah_login">Login</a>
+
+    <script>
+        document.getElementById("fuzzyForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var form = document.getElementById("fuzzyForm");
+            var formData = new FormData(form);
+
+            fetch('/fuzzy', {
+                method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData.entries())),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                var outputDiv = document.getElementById("output");
+                outputDiv.innerHTML = "<h2>Output:</h2>" +
+                                      "<p>Nilai Output: " + data.output_value + "</p>" +
+                                      "<p>Pola Asuh: " + data.pola_asuh + "</p>";
+                
+                var membershipValuesString = JSON.stringify(data.membership_values);
+                outputDiv.innerHTML += "<p>Membership Values: " + membershipValuesString + "</p>";
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
