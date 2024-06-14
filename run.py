@@ -312,30 +312,6 @@ def delete_var(id):
 # Fuzzy logic and simulation
 
 # Function to create custom antecedent with linguistic labels
-def create_custom_antecedent(name, range_values, linguistic_labels):
-    antecedent = ctrl.Antecedent(np.arange(*range_values), name)
-    antecedent.automf(3, names=linguistic_labels)
-    return antecedent
-
-# Function to create consequent with linguistic labels
-def create_consequent(name, range_values, linguistic_labels):
-    consequent = ctrl.Consequent(np.arange(*range_values), name)
-    consequent.automf(3, names=linguistic_labels)
-    return consequent
-
-@app.route('/fuzzy', methods=['POST'])
-def fuzzy_logic():
-    input_values = {key: int(value) for key, value in request.json.items()}
-    output_value, membership_values, pola_asuh = simulate(input_vars, fuzzy_rules, input_values)
-    
-    response = {
-        "output_value": output_value,
-        "membership_values": membership_values,
-        "pola_asuh": pola_asuh
-    }
-    
-    return jsonify(response)
-
 # Route to render index.html page
 @app.route('/')
 def index():
@@ -347,31 +323,84 @@ def pindah_admin():
     return render_template('admin/dashboard.html')
 
 # Define the fuzzy variables and rules
-cursor = db.cursor()
-sql_query = """
-    SELECT mv.name_tmv AS var_name, GROUP_CONCAT(ml.label_tml ORDER BY ml.id_tml) AS linguistic_labels
-    FROM tbl_m_variabel mv
-    JOIN tbl_m_linguistic ml ON mv.id_tmv = ml.id_tmv
-    WHERE mv.type_tmv = 'input'
-    GROUP BY mv.id_tmv;
-"""
-cursor.execute(sql_query)
-input_var_definitions = [{'var_name': var_name, 'linguistic_labels': linguistic_labels.split(',')} for var_name, linguistic_labels in cursor]
-cursor.close()
+    
+# Function to create custom antecedent from database
+def create_custom_antecedent(name, range_values, linguistic_labels):
+    antecedent = ctrl.Antecedent(np.arange(*range_values), name)
+    
+    for label, trapmf_values in linguistic_labels.items():
+        antecedent[label] = fuzz.trapmf(antecedent.universe, trapmf_values)
+    
+    return antecedent
 
+# Function to create consequent from database
+def create_consequent(name, range_values, linguistic_labels):
+    consequent = ctrl.Consequent(np.arange(*range_values), name)
+    
+    for idx, label in enumerate(linguistic_labels):
+        consequent[label] = fuzz.trapmf(consequent.universe, [idx + 1, idx + 1, idx + 1, idx + 1])  # Default trapmf values
+    
+    return consequent
+
+# Function to fetch input variable definitions from database
+def fetch_input_var_definitions():
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT name_tmv FROM tbl_m_variabel WHERE type_tmv = 'input'")
+    return [{'var_name': row['name_tmv']} for row in cursor.fetchall()]
+
+# Function to create custom antecedent from database
+def create_custom_antecedent_from_db(var_name):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(f"SELECT * FROM tbl_m_linguistic WHERE id_tmv = (SELECT id_tmv FROM tbl_m_variabel WHERE name_tmv = '{var_name}')")
+    linguistic_labels = {}
+    for row in cursor.fetchall():
+        linguistic_labels[row['label_tml']] = [row['a_tml'], row['b_tml'], row['c_tml'], row['d_tml']]
+    return create_custom_antecedent(var_name, range_values, linguistic_labels)
+
+
+def create_consequent(name, range_values, linguistic_labels):
+    consequent = ctrl.Consequent(np.arange(*range_values), name)
+    consequent.automf(3, names=linguistic_labels)
+    return consequent
+
+# Define range values for fuzzy variables
 range_values = (1, 11, 1)
+range_values_output = (1, 7, 1)
+
+# Initialize input variable definitions using database values
+input_var_definitions = fetch_input_var_definitions()
+
+# Initialize input variables using database values
 input_vars = {
-    item['var_name']: create_custom_antecedent(item['var_name'], range_values, item['linguistic_labels'])
+    item['var_name']: create_custom_antecedent_from_db(item['var_name'])
     for item in input_var_definitions
 }
 
-output_linguistic_labels = ['otoriter', 'tidak_terlibat', 'permisif', 'demokratis']
-output_var = create_consequent('pola_asuh', range_values, output_linguistic_labels)
+# Definisi trapmf untuk output variables
+output_linguistic_labels = {
+    'otoriter': [1, 2, 2, 3],
+    'tidak_terlibat': [2, 3, 3, 4],
+    'demokratis': [3, 4, 4, 5],
+    'permisif': [4, 5, 5, 6]
+}
 
+# Inisialisasi variabel output dengan trapmf
+output_var = create_consequent('pola_asuh', range_values_output, output_linguistic_labels)
+
+
+# Mendefinisikan aturan fuzzy dari data di database
 cursor = db.cursor()
 sql_query = "SELECT * FROM vw_fuzzy_rules"
 cursor.execute(sql_query)
-rules_data = [{'rule': row[1], 'variable': row[2], 'linguistic': row[3], 'output': row[4]} for row in cursor]
+rules_data = []
+for row in cursor:
+    rule_data = {
+        'rule': row[1],
+        'variable': row[2],
+        'linguistic': row[3],
+        'output': row[4]
+    }
+    rules_data.append(rule_data)
 cursor.close()
 
 def define_rules_from_data(rules_data, input_vars, output_var):
@@ -397,30 +426,61 @@ def define_rules_from_data(rules_data, input_vars, output_var):
         rules.append(rule)
     return rules
 
+# Definisikan aturan fuzzy dari data
 fuzzy_rules = define_rules_from_data(rules_data, input_vars, output_var)
 
-# Function to simulate and get output membership values
+# Fungsi untuk menjalankan simulasi dan mendapatkan nilai keanggotaan output
 def simulate(inputs, rules, input_values):
+    # Buat sistem kontrol dan simulasi
     control_system = ctrl.ControlSystem(rules)
     simulation = ctrl.ControlSystemSimulation(control_system)
     
+    # Masukkan nilai-nilai input
     for var, value in input_values.items():
         simulation.input[var] = value
     
     try:
+        # Hitung simulasi
         simulation.compute()
         output_value = simulation.output['pola_asuh']
         
+        # Dapatkan nilai keanggotaan untuk setiap label linguistik output
         membership_values = {label: fuzz.interp_membership(output_var.universe, output_var[label].mf, output_value)
                              for label in output_linguistic_labels}
         
+        # Dapatkan label dengan nilai keanggotaan terbesar
         max_membership_label = max(output_linguistic_labels, key=lambda label: membership_values[label])
+        
+        # Dapatkan nilai keanggotaan terbesar
         max_membership_value = membership_values[max_membership_label]
+        
+        # Tampilkan hasil output
+        print(f"Pola Asuh: {max_membership_label.capitalize()}")
+        print(f"Nilai Keanggotaan Terbesar: {max_membership_value:.4f}")
         
         return output_value, membership_values, max_membership_label.capitalize()
       
+            
     except (AssertionError, ValueError):
         return None, None, "-"
+
+
+# Rute untuk menerima input dan memberikan output
+@app.route('/fuzzy', methods=['POST'])
+def fuzzy_logic():
+    input_values = {key: int(value) for key, value in
+                        request.json.items()}
+    
+    output_value, membership_values, pola_asuh = simulate(input_vars, fuzzy_rules, input_values)
+    
+    response = {
+        "output_value": output_value,
+        "membership_values": membership_values,
+        "pola_asuh": pola_asuh
+    }
+    
+    return jsonify(response)
+
 
 @app.route('/logout')
 def logout():
