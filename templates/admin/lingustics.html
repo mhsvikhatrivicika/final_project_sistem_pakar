@@ -1,8 +1,9 @@
+<!-- linguistics.html -->
 {% if not session.username %}
-                <script type="text/javascript">
-                    window.location = "/";
-                </script>
-            {% endif %}
+<script type="text/javascript">
+    window.location = "/";
+</script>
+{% endif %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +22,15 @@
             {% endfor %}
         </select><br><br>
         <label for="label_tml">Label TML:</label>
-        <input type="text" id="label_tml" name="label_tml"><br><br>
+        <input type="text" id="label_tml" name="label_tml" required><br><br>
+        <label for="a_tml">Titik A:</label>
+        <input type="number" id="a_tml" name="a_tml" step="any" required><br><br>
+        <label for="b_tml">Titik B:</label>
+        <input type="number" id="b_tml" name="b_tml" step="any" required><br><br>
+        <label for="c_tml">Titik C:</label>
+        <input type="number" id="c_tml" name="c_tml" step="any" required><br><br>
+        <label for="d_tml">Titik D:</label>
+        <input type="number" id="d_tml" name="d_tml" step="any" required><br><br>
         <button type="submit">Tambah Data</button>
     </form>
     <br>
@@ -31,16 +40,24 @@
             <th>ID</th>
             <th>Nama TMV</th>
             <th>Label TML</th>
+            <th>Titik A</th>
+            <th>Titik B</th>
+            <th>Titik C</th>
+            <th>Titik D</th>
             <th>Aksi</th>
         </tr>
         {% for row in linguistic %}
         <tr>
-            <td>{{ row[0] }}</td>
+            <td>{{ loop.index }}</td>
             <td>{{ row[1] }}</td>
             <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ row[5] }}</td>
+            <td>{{ row[6] }}</td>
             <td>
                 <a href="/edit/{{ row[0] }}">Edit</a>
-                <form action="/delete/{{ row[0] }}" method="post">
+                <form action="/delete/{{ row[0] }}" method="post" style="display:inline;">
                     <button type="submit">Hapus</button>
                 </form>
             </td>

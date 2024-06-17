@@ -1,9 +1,3 @@
-{% if not session.username %}
-                <script type="text/javascript">
-                    window.location = "/";
-                </script>
-            {% endif %}
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -39,6 +33,33 @@
         </div>
         <button type="submit" class="btn btn-primary">Register</button>
       </form>
+      
+      <h3 class="mt-5">User List</h3>
+      <table class="table table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Username</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ user['username_tmu'] }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('reset_password', user_id=user['id_tmu']) }}" style="display:inline-block;">
+                <button type="submit" class="btn btn-warning btn-sm">Reset Password</button>
+              </form>
+              <form method="POST" action="{{ url_for('delete_user', user_id=user['id_tmu']) }}" style="display:inline-block;">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
     <a href="/pindah_admin">Back</a>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

@@ -66,9 +66,12 @@ def register_user(username, password):
     finally:
         cursor.close()
 
+
+# Rute untuk menampilkan halaman register dengan daftar pengguna
 @app.route('/pindah_register')
 def pindah_register():
-    return render_template('admin/register.html')
+    users = get_all_users()  # Dapatkan daftar semua pengguna
+    return render_template('admin/register.html', users=users)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -85,6 +88,44 @@ def register():
     
     return render_template('admin/register.html')
 
+# Tambahkan fungsi untuk mendapatkan daftar semua pengguna
+def get_all_users():
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT id_tmu, username_tmu FROM tbl_m_users")
+    users = cursor.fetchall()
+    cursor.close()
+    return users
+
+# Tambahkan rute dan fungsi untuk reset kata sandi
+@app.route('/reset_password/<int:user_id>', methods=['POST'])
+def reset_password(user_id):
+    cursor = db.cursor()
+    default_password = '123123'
+    hashed_password = hashlib.md5(default_password.encode()).hexdigest()
+    try:
+        cursor.execute("UPDATE tbl_m_users SET password_tmu = %s WHERE id_tmu = %s", (hashed_password, user_id))
+        db.commit()
+        flash('Password has been reset to 123123.', 'success')
+    except mysql.connector.Error as err:
+        flash(f'Error: {err}', 'danger')
+    finally:
+        cursor.close()
+    return redirect(url_for('pindah_register'))
+
+# Tambahkan rute dan fungsi untuk menghapus akun
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    cursor = db.cursor()
+    try:
+        cursor.execute("DELETE FROM tbl_m_users WHERE id_tmu = %s", (user_id,))
+        db.commit()
+        flash('User has been deleted.', 'success')
+    except mysql.connector.Error as err:
+        flash(f'Error: {err}', 'danger')
+    finally:
+        cursor.close()
+    return redirect(url_for('pindah_register'))
+
 # CRUD operations for linguistic data
 @app.route('/pindah_linguistics')
 def pindah_linguistics():
@@ -93,23 +134,33 @@ def pindah_linguistics():
 
 def get_linguistic():
     cursor = db.cursor()
-    cursor.execute("SELECT l.id_tml, v.name_tmv, l.label_tml FROM tbl_m_linguistic l INNER JOIN tbl_m_variabel v ON l.id_tmv = v.id_tmv")
+    cursor.execute("SELECT l.id_tml, v.name_tmv, l.label_tml, l.a_tml, l.b_tml, l.c_tml, l.d_tml FROM tbl_m_linguistic l INNER JOIN tbl_m_variabel v ON l.id_tmv = v.id_tmv")
     linguistic = cursor.fetchall()
     cursor.close()
     return linguistic
 
-def add_linguistic(name_tmv, label_tml):
+
+def add_linguistic(name_tmv, label_tml, a_tml, b_tml, c_tml, d_tml):
     cursor = db.cursor()
-    cursor.execute("INSERT INTO tbl_m_linguistic (id_tmv, label_tml) SELECT id_tmv, %s FROM tbl_m_variabel WHERE name_tmv = %s", (label_tml, name_tmv))
+    query = """
+    INSERT INTO tbl_m_linguistic (id_tmv, label_tml, a_tml, b_tml, c_tml, d_tml)
+    SELECT id_tmv, %s, %s, %s, %s, %s FROM tbl_m_variabel WHERE name_tmv = %s
+    """
+    cursor.execute(query, (label_tml, a_tml, b_tml, c_tml, d_tml, name_tmv))
     db.commit()
     cursor.close()
+
 
 @app.route('/add', methods=['POST'])
 def add():
     if request.method == 'POST':
         name_tmv = request.form['name_tmv']
         label_tml = request.form['label_tml']
-        add_linguistic(name_tmv, label_tml)
+        a_tml = request.form['a_tml']
+        b_tml = request.form['b_tml']
+        c_tml = request.form['c_tml']
+        d_tml = request.form['d_tml']
+        add_linguistic(name_tmv, label_tml, a_tml, b_tml, c_tml, d_tml)
         flash('Linguistic data added successfully', 'success')
         return redirect('/pindah_linguistics')
 
@@ -117,16 +168,22 @@ def add():
 def edit(id_tml):
     cursor = db.cursor()
     if request.method == 'GET':
-        cursor.execute("SELECT l.id_tml, v.name_tmv, l.label_tml FROM tbl_m_linguistic l INNER JOIN tbl_m_variabel v ON l.id_tmv = v.id_tmv WHERE l.id_tml = %s", (id_tml,))
+        cursor.execute("SELECT l.id_tml, v.name_tmv, l.label_tml, l.a_tml, l.b_tml, l.c_tml, l.d_tml FROM tbl_m_linguistic l INNER JOIN tbl_m_variabel v ON l.id_tmv = v.id_tmv WHERE l.id_tml = %s", (id_tml,))
         linguistic = cursor.fetchone()
         return render_template('admin/edit_lingustics.html', linguistic=linguistic)
     if request.method == 'POST':
         label_tml = request.form['label_tml']
-        cursor.execute("UPDATE tbl_m_linguistic SET label_tml = %s WHERE id_tml = %s", (label_tml, id_tml))
+        a_tml = request.form['a_tml']
+        b_tml = request.form['b_tml']
+        c_tml = request.form['c_tml']
+        d_tml = request.form['d_tml']
+        cursor.execute("UPDATE tbl_m_linguistic SET label_tml = %s, a_tml = %s, b_tml = %s, c_tml = %s, d_tml = %s WHERE id_tml = %s",
+                       (label_tml, a_tml, b_tml, c_tml, d_tml, id_tml))
         db.commit()
         cursor.close()
         flash('Linguistic data updated successfully', 'success')
         return redirect('/pindah_linguistics')
+
 
 @app.route('/delete/<int:id_tml>', methods=['POST'])
 def delete(id_tml):
@@ -468,10 +525,14 @@ def simulate(inputs, rules, input_values):
 # Rute untuk menerima input dan memberikan output
 @app.route('/fuzzy', methods=['POST'])
 def fuzzy_logic():
-    input_values = {key: int(value) for key, value in
-                        request.json.items()}
+    input_values = {key: int(value) for key, value in request.json.items()}
     
     output_value, membership_values, pola_asuh = simulate(input_vars, fuzzy_rules, input_values)
+    
+    # Simpan hasil ke session
+    session['output_value'] = output_value
+    session['pola_asuh'] = pola_asuh
+    session['membership_values'] = membership_values
     
     response = {
         "output_value": output_value,
@@ -480,6 +541,20 @@ def fuzzy_logic():
     }
     
     return jsonify(response)
+
+
+@app.route('/hasil_fuzzy')
+def hasil_fuzzy():
+    if 'output_value' in session and 'pola_asuh' in session and 'membership_values' in session:
+        output_value = session['output_value']
+        pola_asuh = session['pola_asuh']
+        membership_values = session['membership_values']
+    else:
+        output_value = None
+        pola_asuh = None
+        membership_values = None
+    
+    return render_template('hasil_fuzzy.html', output_value=output_value, pola_asuh=pola_asuh, membership_values=membership_values)
 
 
 @app.route('/logout')

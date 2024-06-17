@@ -52,7 +52,7 @@
         <tbody>
             {% for rule in rules %}
                 <tr>
-                    <td>{{ rule[0] }}</td>
+                    <td>{{ loop.index }}</td>
                     <td>{{ rule[1] }}</td>
                     <td>{{ rule[2] }}</td>
                     <td>{{ rule[3] }}</td>

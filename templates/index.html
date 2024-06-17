@@ -35,13 +35,13 @@
             })
             .then(response => response.json())
             .then(data => {
-                var outputDiv = document.getElementById("output");
-                outputDiv.innerHTML = "<h2>Output:</h2>" +
-                                      "<p>Nilai Output: " + data.output_value + "</p>" +
-                                      "<p>Pola Asuh: " + data.pola_asuh + "</p>";
+                // Simpan hasil ke session storage
+                sessionStorage.setItem('output_value', data.output_value);
+                sessionStorage.setItem('pola_asuh', data.pola_asuh);
+                sessionStorage.setItem('membership_values', JSON.stringify(data.membership_values));
                 
-                var membershipValuesString = JSON.stringify(data.membership_values);
-                outputDiv.innerHTML += "<p>Membership Values: " + membershipValuesString + "</p>";
+                // Redirect ke halaman hasil
+                window.location.href = "/hasil_fuzzy";
             })
             .catch(error => console.error('Error:', error));
         });
