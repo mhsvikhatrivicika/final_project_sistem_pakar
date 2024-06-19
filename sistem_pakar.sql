@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 13, 2024 at 08:00 AM
+-- Generation Time: Jun 19, 2024 at 05:15 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -55,35 +55,39 @@ CREATE TABLE `tbl_m_desc_rule` (
 CREATE TABLE `tbl_m_linguistic` (
   `id_tml` int(11) NOT NULL,
   `id_tmv` int(11) NOT NULL,
-  `label_tml` varchar(255) NOT NULL
+  `label_tml` varchar(255) NOT NULL,
+  `a_tml` int(11) NOT NULL,
+  `b_tml` int(11) NOT NULL,
+  `c_tml` int(11) NOT NULL,
+  `d_tml` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tbl_m_linguistic`
 --
 
-INSERT INTO `tbl_m_linguistic` (`id_tml`, `id_tmv`, `label_tml`) VALUES
-(1, 1, 'rendah'),
-(2, 1, 'sedang'),
-(3, 1, 'tinggi'),
-(4, 2, 'rendah'),
-(5, 2, 'sedang'),
-(6, 2, 'tinggi'),
-(7, 3, 'rendah'),
-(8, 3, 'sedang'),
-(9, 3, 'tinggi'),
-(10, 4, 'rendah'),
-(11, 4, 'sedang'),
-(12, 4, 'tinggi'),
-(13, 5, 'rendah'),
-(14, 5, 'sedang'),
-(15, 5, 'tinggi'),
-(16, 6, 'rendah'),
-(17, 6, 'sedang'),
-(18, 6, 'tinggi'),
-(19, 7, 'rendah'),
-(20, 7, 'sedang'),
-(21, 7, 'tinggi');
+INSERT INTO `tbl_m_linguistic` (`id_tml`, `id_tmv`, `label_tml`, `a_tml`, `b_tml`, `c_tml`, `d_tml`) VALUES
+(1, 1, 'tidak_bahagia', 1, 1, 1, 4),
+(2, 1, 'biasa', 4, 5, 6, 7),
+(3, 1, 'sangat_bahagia', 7, 10, 10, 10),
+(4, 2, 'rendah', 1, 1, 1, 4),
+(5, 2, 'sedang', 4, 5, 6, 7),
+(6, 2, 'tinggi', 7, 10, 10, 10),
+(7, 3, 'rendah', 1, 1, 1, 4),
+(8, 3, 'sedang', 4, 5, 6, 7),
+(9, 3, 'tinggi', 7, 10, 10, 10),
+(10, 4, 'rendah', 1, 1, 1, 4),
+(11, 4, 'sedang', 4, 5, 6, 7),
+(12, 4, 'tinggi', 7, 10, 10, 10),
+(13, 5, 'rendah', 1, 1, 1, 4),
+(14, 5, 'sedang', 4, 5, 6, 7),
+(15, 5, 'tinggi', 7, 10, 10, 10),
+(16, 6, 'rendah', 1, 1, 1, 4),
+(17, 6, 'sedang', 4, 5, 6, 7),
+(18, 6, 'tinggi', 7, 10, 10, 10),
+(19, 7, 'rendah', 1, 1, 1, 4),
+(20, 7, 'sedang', 4, 5, 6, 7),
+(21, 7, 'tinggi', 7, 10, 10, 10);
 
 -- --------------------------------------------------------
 
@@ -103,8 +107,8 @@ CREATE TABLE `tbl_m_users` (
 
 INSERT INTO `tbl_m_users` (`id_tmu`, `username_tmu`, `password_tmu`) VALUES
 (1, 'vikha', '4297f44b13955235245b2497399d7a93'),
-(2, 'bayu', '202cb962ac59075b964b07152d234b70'),
-(3, 't', 'e358efa489f58062f10dd7316b65649e');
+(3, 't', 'e358efa489f58062f10dd7316b65649e'),
+(4, 'aji', '4297f44b13955235245b2497399d7a93');
 
 -- --------------------------------------------------------
 
@@ -130,8 +134,7 @@ INSERT INTO `tbl_m_variabel` (`id_tmv`, `name_tmv`, `type_tmv`, `question_tmv`) 
 (4, 'keterampilan_sosial', 'input', 'Bagaimana Anda menilai keterampilan sosial Anda?'),
 (5, 'tingkat_stres', 'input', 'Seberapa sering Anda merasa stres dalam keseharian Anda?'),
 (6, 'kepercayaan_diri', 'input', 'Seberapa tinggi tingkat kepercayaan diri Anda?'),
-(7, 'kedisiplinan', 'input', 'Bagaimana Anda menilai tingkat kedisiplinan Anda?'),
-(11, 'rtt', 'output', 'rt');
+(7, 'kedisiplinan', 'input', 'Bagaimana Anda menilai tingkat kedisiplinan Anda?');
 
 -- --------------------------------------------------------
 
@@ -265,19 +268,19 @@ ALTER TABLE `tbl_m_desc_rule`
 -- AUTO_INCREMENT for table `tbl_m_linguistic`
 --
 ALTER TABLE `tbl_m_linguistic`
-  MODIFY `id_tml` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_tml` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `tbl_m_users`
 --
 ALTER TABLE `tbl_m_users`
-  MODIFY `id_tmu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_tmu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `tbl_m_variabel`
 --
 ALTER TABLE `tbl_m_variabel`
-  MODIFY `id_tmv` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_tmv` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `tbl_t_fuzzy_rules`
